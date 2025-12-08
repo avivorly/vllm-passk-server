@@ -51,19 +51,33 @@ async def generate(req: GenerateRequest):
 
     stop = req.stop or ["\ndef", "\nclass", "\n\n\n"]
 
-    sampling_params = SamplingParams(
-        n=req.n,
-        temperature=req.temperature,
-        max_tokens=req.max_tokens,
-        stop=stop,
-    )
-
-    outputs = llm.generate([req.prompt], sampling_params)
-
-    completions = [
-        Completion(text=c.text, tokens=len(c.token_ids))
-        for c in outputs[0].outputs
-    ]
+    # temperature=0 (greedy) requires n=1, so we run n separate requests
+    if req.temperature == 0:
+        sampling_params = SamplingParams(
+            n=1,
+            temperature=0,
+            max_tokens=req.max_tokens,
+            stop=stop,
+        )
+        # Generate n identical greedy completions by running n times
+        # (they'll all be the same, but user requested n samples)
+        outputs = llm.generate([req.prompt] * req.n, sampling_params)
+        completions = [
+            Completion(text=out.outputs[0].text, tokens=len(out.outputs[0].token_ids))
+            for out in outputs
+        ]
+    else:
+        sampling_params = SamplingParams(
+            n=req.n,
+            temperature=req.temperature,
+            max_tokens=req.max_tokens,
+            stop=stop,
+        )
+        outputs = llm.generate([req.prompt], sampling_params)
+        completions = [
+            Completion(text=c.text, tokens=len(c.token_ids))
+            for c in outputs[0].outputs
+        ]
 
     total_tokens = sum(c.tokens for c in completions)
 
