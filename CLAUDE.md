@@ -1,6 +1,15 @@
-# CLAUDE.md
+# vLLM Pass@K Server
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+High-throughput code generation and evaluation server for HumanEval benchmarks using vLLM.
+
+## Purpose
+
+The main purpose of this project is to run `benchmark_server.py` in a loop to evaluate code generation models on HumanEval problems. The server keeps the model loaded in memory, eliminating model loading overhead between benchmark runs.
+
+**Core workflow:**
+1. Start `vllm_server.py` (loads model once)
+2. Run `benchmark_server.py` in a loop for different questions/temperatures/n values
+3. Each run generates completions, tests them, and saves results to JSON
 
 ## Environment
 
@@ -54,16 +63,36 @@ python3 server_script.py \
 - `GET /health` - Server status
 - `GET /` - Hello world
 
-## Throughput
+## Throughput Benchmarks
 
-| n (completions) | TPS |
-|-----------------|-----|
-| 100 | ~8K |
-| 500 | ~22K |
-| 1000 | ~27K |
-| 2000 | ~30K |
+### Raw Generation TPS (max_tokens=100, 3 stop sequences)
+| n (completions) | TPS | Avg tokens/completion |
+|-----------------|-----|----------------------|
+| 10 | ~1.9K | 62 |
+| 100 | ~10.5K | 59 |
+| 1000 | ~35K | 59 |
+| 10000 | ~35.8K | 59 |
+
+### Evalplus-style Generation (max_tokens=768, 11 stop sequences)
+| n (completions) | TPS | Avg tokens/completion |
+|-----------------|-----|----------------------|
+| 100 | ~4.8K | 76 |
+| 1000 | ~16.5K | 76 |
 
 Higher n = better throughput due to prefix caching (all completions share the same prompt KV cache).
+
+**Note**: TPS varies with completion length. Shorter completions (max_tokens=100) achieve higher TPS than longer ones (max_tokens=768).
+
+### Full Pipeline: Generation + Testing (n=1000, 164 HumanEval+ problems)
+| Phase | Time | TPS |
+|-------|------|-----|
+| Generation | 4.69s | 16,536 TPS |
+| Testing (1 worker) | 77.6s | 999 Test TPS |
+| Testing (16 workers) | 11.3s | 6,886 Test TPS |
+
+**Parallel Testing Sweet Spot**: 16 workers provides 6.9x speedup on 32-core AMD Ryzen 9 9950X.
+
+Test TPS = total generated tokens / testing time (measures tokens verified per second).
 
 ## vLLM Server Configuration
 
@@ -93,7 +122,103 @@ LLM(
 
 **Stop sequences** for clean code completions: `["\ndef", "\nclass", "\n\n\n"]`
 
-## Other Scripts (for local benchmarking)
+## Evalplus Integration
 
+For HumanEval+ evaluation with the optimized vLLM config:
+
+```python
+from evalplus.data import get_human_eval_plus
+from evalplus.evaluate import check_correctness, get_groundtruth, PASS
+from evalplus.gen.util import trusted_exec
+from evalplus.gen.util.api_request import extra_eos_for_direct_completion
+from evalplus.data.utils import EOS
+from vllm import LLM, SamplingParams
+from concurrent.futures import ProcessPoolExecutor
+
+# Get evalplus stop sequences
+STOP = list(EOS) + extra_eos_for_direct_completion('humaneval')
+
+# Generate with optimized config
+params = SamplingParams(n=1000, temperature=0.8, max_tokens=768, top_p=0.95, stop=STOP)
+outputs = llm.generate([prompt], params)
+
+# Parallel testing (16 workers optimal)
+with ProcessPoolExecutor(max_workers=16) as executor:
+    futures = [executor.submit(check_correctness, ...) for ...]
+```
+
+## Single Question Benchmark (Main Script)
+
+Use `benchmark_server.py` to benchmark a single HumanEval question using the running server:
+
+```bash
+# Start the server first (one time)
+python3 vllm_server.py &
+
+# Run benchmarks in a loop
+for q in {0..163}; do
+  python3 benchmark_server.py --question $q --temperature 0.5 --n 1000
+done
+```
+
+**Arguments:**
+- `--question, -q` - Question index (0-163)
+- `--temperature, -t` - Sampling temperature (default: 0.8)
+- `--n` - Number of completions (default: 1000)
+- `--output, -o` - Output file (default: `results_q{q}_t{t}_n{n}.json`)
+- `--server, -s` - Server URL (default: `http://localhost:8000`)
+
+**Output JSON structure:**
+```json
+{
+  "task_id": "HumanEval/0",
+  "question_idx": 0,
+  "temperature": 0.5,
+  "n": 1000,
+  "total_tokens": 43798,
+  "gen_time": 2.16,
+  "test_time": 4.09,
+  "pipeline_time": 6.25,
+  "total_time": 9.08,
+  "gen_tps": 20316,
+  "test_tps": 10712,
+  "pipeline_tps": 7014,
+  "passed": 309,
+  "pass_rate": 30.9,
+  "completions": [
+    {"text": "...", "tokens": 45, "passed": true},
+    ...
+  ]
+}
+```
+
+**TPS Metrics:**
+- **Gen TPS**: Tokens generated per second (generation phase only)
+- **Test TPS**: Tokens verified per second (testing phase only)
+- **Pipeline TPS**: Tokens / (gen_time + test_time) - the practical throughput
+
+### Benchmark Results (HumanEval/0, n=1000, T=0.5)
+
+| Metric | Value |
+|--------|-------|
+| Gen TPS | 20,316 |
+| Test TPS | 10,712 |
+| Pipeline TPS | 7,014 |
+| Pass Rate | 30.9% |
+| Total Time | 9.08s |
+
+### Temperature Effect on Pass Rate
+
+| Temperature | Gen TPS | Test TPS | Pass Rate |
+|-------------|---------|----------|-----------|
+| 0.5 | ~20K | ~10K | ~31% |
+| 1.0 | ~20K | ~7.5K | ~8.5% |
+
+Lower temperature = higher pass rate (more deterministic outputs).
+
+## Other Scripts
+
+- `benchmark_question.py` - Standalone benchmark (loads model each time, slower)
+- `bigcode_benchmark.py` - Full HumanEval benchmark (all 164 problems)
 - `vllm_final.py` - Pure throughput benchmark
-- `evaluate_passk.py` - Correctness evaluation (94% pass@2500)
+- `evaluate_passk.py` - Correctness evaluation
