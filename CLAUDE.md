@@ -301,6 +301,16 @@ Every result JSON contains everything needed to exactly reproduce the experiment
 
 4. **Reference test saved**: The exact test code used for pass/fail evaluation.
 
+5. **Trailing newline on prompt**: We append `\n` to the prompt after the docstring. Without this, prompts end with `"""` and at low temperature the model deterministically outputs EOS (end-of-sequence) as its first token, resulting in empty completions. The newline signals "continue generating" and the model produces actual code.
+
+   ```python
+   # Without \n: prompt ends with """
+   # Model at T≈0 outputs EOS immediately → empty completion
+
+   # With \n: prompt ends with """\n
+   # Model continues generating code → proper completion
+   ```
+
 ## Other Scripts
 
 - `benchmark_question.py` - Standalone benchmark (loads model each time, slower)

@@ -20,7 +20,7 @@ STOP_WORDS = task.stop_words
 def test_greedy(question_idx: int, server_url: str = "http://localhost:8000", use_stop_words: bool = True):
     """Test a question with T=0 (greedy) and n=1. Returns True if passed."""
 
-    prompt = task.get_prompt(dataset[question_idx])
+    prompt = task.get_prompt(dataset[question_idx]) + "\n"
     reference = task.get_reference(dataset[question_idx])
     task_id = dataset[question_idx]['task_id']
     stop_words = STOP_WORDS if use_stop_words else []
@@ -88,7 +88,7 @@ def benchmark_all_questions(start_idx: int = 0, end_idx: int = 164, n: int = 100
             skipped.append(q_idx)
 
             # Save skip record with full reproducibility info in question directory
-            prompt = task.get_prompt(dataset[q_idx])
+            prompt = task.get_prompt(dataset[q_idx]) + "\n"
             reference = task.get_reference(dataset[q_idx])
 
             question_dir = f"{output_dir}/q{q_idx}"

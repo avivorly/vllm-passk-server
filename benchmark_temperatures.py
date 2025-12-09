@@ -142,7 +142,7 @@ def benchmark_question_all_temperatures(question_idx: int, n: int = 1000,
         print(f"Error: question_idx {question_idx} out of range (max {len(dataset)-1})")
         return
 
-    prompt = task.get_prompt(dataset[question_idx])
+    prompt = task.get_prompt(dataset[question_idx]) + "\n"
     reference = task.get_reference(dataset[question_idx])
     task_id = dataset[question_idx]['task_id']
     stop_words = task.stop_words if use_stop_words else []
