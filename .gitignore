@@ -17,6 +17,7 @@ env/
 
 # Results and logs
 results_*.json
+results/
 *.log
 /tmp/
 

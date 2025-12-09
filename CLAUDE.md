@@ -216,6 +216,91 @@ done
 
 Lower temperature = higher pass rate (more deterministic outputs).
 
+## Temperature Sweep Benchmarks
+
+### Single Question, All Temperatures
+
+Use `benchmark_temperatures.py` to benchmark one question across 14 temperatures:
+
+```bash
+python3 benchmark_temperatures.py --question 0 --n 300 --output_dir results
+```
+
+**Temperatures tested:** `[0.0000001, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0, 1.2, 1.4, 1.5, 1.7, 2.0, 2.5, 3.0]`
+
+Results saved to `results/q{idx}/` with one JSON per temperature plus a `summary.json`.
+
+### Smart Batch Benchmarking
+
+Use `benchmark_all_questions.py` to efficiently benchmark multiple questions:
+
+```bash
+python3 benchmark_all_questions.py --start 0 --end 164 --n 300 --output_dir results
+```
+
+**Smart skipping strategy:**
+1. First test each question with T=0 (greedy), n=1
+2. If passed: skip (easy question) - save `skipped.json`
+3. If failed: run full 14-temperature benchmark
+
+**Output structure:**
+```
+results/
+├── run_summary_q0-q163.json    # Global summary
+├── q0/
+│   └── skipped.json            # Easy question (passed greedy)
+├── q1/
+│   ├── t0.0000001_n300.json    # Full benchmark results
+│   ├── t0.1_n300.json
+│   ├── ...
+│   └── summary.json
+└── ...
+```
+
+## Reproducibility
+
+Every result JSON contains everything needed to exactly reproduce the experiment:
+
+```json
+{
+  "task_id": "HumanEval/1",
+  "question_idx": 1,
+  "prompt": "from typing import List\n\ndef separate_paren_groups...",
+  "reference": "assert separate_paren_groups('(())')==...",
+  "params": {
+    "temperature": 0.5,
+    "n": 300,
+    "max_tokens": 768,
+    "stop": ["\nclass", "\ndef", "\n#", "\n@", "\nprint", "\nif", "\n\"\"\"", "\n\n\n"]
+  },
+  "completions": [...]
+}
+```
+
+**Key guarantees:**
+
+1. **Exact prompt saved**: The `prompt` field is exactly what the model receives - no hidden chat templates or system prompts. vLLM sends raw text directly to the model.
+
+2. **All parameters saved**: Temperature, n, max_tokens, and stop sequences are all recorded.
+
+3. **No chat template**: We use raw completion mode (standard HumanEval protocol), NOT chat format. The model sees:
+   ```
+   from typing import List
+
+   def separate_paren_groups(paren_string: str) -> List[str]:
+       """ Input to this function is...
+       """
+   ```
+   NOT:
+   ```
+   <|im_start|>system
+   You are Qwen...
+   <|im_start|>user
+   ...
+   ```
+
+4. **Reference test saved**: The exact test code used for pass/fail evaluation.
+
 ## Other Scripts
 
 - `benchmark_question.py` - Standalone benchmark (loads model each time, slower)
