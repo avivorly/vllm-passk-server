@@ -129,7 +129,8 @@ def run_single_benchmark(question_idx: int, temperature: float, n: int, output_f
 
 def benchmark_question_all_temperatures(question_idx: int, n: int = 1000,
                                         output_dir: str = "results",
-                                        server_url: str = "http://localhost:8000"):
+                                        server_url: str = "http://localhost:8000",
+                                        use_stop_words: bool = True):
     """Run benchmark for a single question across all temperatures"""
 
     # Setup task
@@ -144,7 +145,7 @@ def benchmark_question_all_temperatures(question_idx: int, n: int = 1000,
     prompt = task.get_prompt(dataset[question_idx])
     reference = task.get_reference(dataset[question_idx])
     task_id = dataset[question_idx]['task_id']
-    stop_words = task.stop_words
+    stop_words = task.stop_words if use_stop_words else []
 
     # Create question-specific directory
     question_dir = f"{output_dir}/q{question_idx}"
@@ -221,6 +222,8 @@ if __name__ == "__main__":
     parser.add_argument('--n', type=int, default=1000, help='Number of completions per temperature')
     parser.add_argument('--output_dir', '-o', type=str, default='results', help='Output directory')
     parser.add_argument('--server', '-s', type=str, default='http://localhost:8000', help='Server URL')
+    parser.add_argument('--no-stop', action='store_true', help='Disable stop words (let model generate freely)')
     args = parser.parse_args()
 
-    benchmark_question_all_temperatures(args.question, args.n, args.output_dir, args.server)
+    benchmark_question_all_temperatures(args.question, args.n, args.output_dir, args.server,
+                                        use_stop_words=not args.no_stop)

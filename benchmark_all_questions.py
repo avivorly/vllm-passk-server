@@ -17,12 +17,13 @@ dataset = task.get_dataset()
 STOP_WORDS = task.stop_words
 
 
-def test_greedy(question_idx: int, server_url: str = "http://localhost:8000"):
+def test_greedy(question_idx: int, server_url: str = "http://localhost:8000", use_stop_words: bool = True):
     """Test a question with T=0 (greedy) and n=1. Returns True if passed."""
 
     prompt = task.get_prompt(dataset[question_idx])
     reference = task.get_reference(dataset[question_idx])
     task_id = dataset[question_idx]['task_id']
+    stop_words = STOP_WORDS if use_stop_words else []
 
     # Generate with T≈0 (greedy)
     response = requests.post(
@@ -32,7 +33,7 @@ def test_greedy(question_idx: int, server_url: str = "http://localhost:8000"):
             "n": 1,
             "temperature": 0.0000001,  # Near-zero for greedy
             "max_tokens": 768,
-            "stop": STOP_WORDS
+            "stop": stop_words
         },
         timeout=60
     )
@@ -52,7 +53,8 @@ def test_greedy(question_idx: int, server_url: str = "http://localhost:8000"):
 
 
 def benchmark_all_questions(start_idx: int = 0, end_idx: int = 164, n: int = 1000,
-                            output_dir: str = "results", server_url: str = "http://localhost:8000"):
+                            output_dir: str = "results", server_url: str = "http://localhost:8000",
+                            use_stop_words: bool = True):
     """
     Loop over all questions:
     - First test with T=0, n=1 (greedy)
@@ -66,9 +68,11 @@ def benchmark_all_questions(start_idx: int = 0, end_idx: int = 164, n: int = 100
     benchmarked = []
     total_start = time.time()
 
+    stop_status = "ON" if use_stop_words else "OFF"
     print(f"\n{'#'*70}")
     print(f"# BENCHMARK ALL QUESTIONS: {start_idx} to {end_idx-1}")
     print(f"# Strategy: Skip if greedy (T=0) passes, else run all temperatures")
+    print(f"# Stop words: {stop_status}")
     print(f"{'#'*70}\n")
 
     for q_idx in range(start_idx, end_idx):
@@ -77,7 +81,7 @@ def benchmark_all_questions(start_idx: int = 0, end_idx: int = 164, n: int = 100
         print(f"\n[Q{q_idx}] {task_id}")
         print(f"  Testing greedy (T=0, n=1)...", end=" ", flush=True)
 
-        passed_greedy = test_greedy(q_idx, server_url)
+        passed_greedy = test_greedy(q_idx, server_url, use_stop_words)
 
         if passed_greedy:
             print(f"PASSED → Skipping (easy question)")
@@ -115,7 +119,8 @@ def benchmark_all_questions(start_idx: int = 0, end_idx: int = 164, n: int = 100
                 question_idx=q_idx,
                 n=n,
                 output_dir=output_dir,
-                server_url=server_url
+                server_url=server_url,
+                use_stop_words=use_stop_words
             )
 
     total_time = time.time() - total_start
@@ -177,6 +182,8 @@ if __name__ == "__main__":
     parser.add_argument('--n', type=int, default=1000, help='Number of completions per temperature')
     parser.add_argument('--output_dir', '-o', type=str, default='results', help='Output directory')
     parser.add_argument('--server', '-s', type=str, default='http://localhost:8000', help='Server URL')
+    parser.add_argument('--no-stop', action='store_true', help='Disable stop words (let model generate freely)')
     args = parser.parse_args()
 
-    benchmark_all_questions(args.start, args.end, args.n, args.output_dir, args.server)
+    benchmark_all_questions(args.start, args.end, args.n, args.output_dir, args.server,
+                           use_stop_words=not args.no_stop)
