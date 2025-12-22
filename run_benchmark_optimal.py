@@ -13,6 +13,100 @@ NUM_GPUS = 8
 GPU_OFFSET = 0
 
 
+def combine_gpu_results(output_dir, start_q, end_q, n_total):
+    """Combine results from all GPUs into single files per temperature"""
+    output_dir = Path(output_dir)
+
+    for q_idx in range(start_q, end_q):
+        q_dir = output_dir / f"q{q_idx}"
+        if not q_dir.exists():
+            continue
+
+        for temp in TEMPERATURES:
+            temp_str = f"{temp:.1f}".replace('.', '_')
+
+            # Collect results from all GPUs
+            gpu_results = []
+            for gpu_id in range(NUM_GPUS):
+                gpu_file = q_dir / f"gpu{gpu_id}_t{temp_str}.json"
+                if gpu_file.exists():
+                    with open(gpu_file) as f:
+                        gpu_results.append(json.load(f))
+
+            if not gpu_results:
+                continue
+
+            # Combine results
+            total_tokens = sum(r['total_tokens'] for r in gpu_results)
+            max_gen_time = max(r['gen_time'] for r in gpu_results)
+            max_eval_time = max(r['eval_time'] for r in gpu_results)
+            total_passed = sum(r['passed'] for r in gpu_results)
+            total_n = sum(r['n'] for r in gpu_results)
+
+            gen_tps = total_tokens / max_gen_time if max_gen_time > 0 else 0
+            eval_tps = total_n / max_eval_time if max_eval_time > 0 else 0
+            total_time = max_gen_time + max_eval_time
+
+            # Combine completions
+            all_completions = []
+            for r in gpu_results:
+                all_completions.extend(r.get('completions', []))
+
+            first = gpu_results[0]
+            combined = {
+                'timing': first.get('timing', {}),
+                'model': first.get('model', 'Qwen/Qwen3-0.6B'),
+                'prompt': first.get('prompt', ''),
+                'sampling_params': first.get('sampling_params', {}),
+                'model_config': first.get('model_config', {}),
+                'question_idx': q_idx,
+                'question_title': first.get('question_title', ''),
+                'temperature': temp,
+                'n': total_n,
+                'total_tokens': total_tokens,
+                'gen_time': max_gen_time,
+                'gen_tps': gen_tps,
+                'eval_time': max_eval_time,
+                'eval_tps': eval_tps,
+                'total_time': total_time,
+                'passed': total_passed,
+                'pass_rate': total_passed / total_n * 100 if total_n > 0 else 0,
+                'completions': all_completions,
+                'gpu_breakdown': [{'gpu_id': r['gpu_id'], 'n': r['n'], 'passed': r['passed'], 'gen_tps': r['gen_tps']} for r in gpu_results],
+            }
+
+            # Save combined result
+            combined_file = q_dir / f"t{temp_str}_n{n_total}.json"
+            with open(combined_file, 'w') as f:
+                json.dump(combined, f, indent=2)
+
+        # Create question summary
+        q_results = []
+        for temp in TEMPERATURES:
+            temp_str = f"{temp:.1f}".replace('.', '_')
+            combined_file = q_dir / f"t{temp_str}_n{n_total}.json"
+            if combined_file.exists():
+                with open(combined_file) as f:
+                    data = json.load(f)
+                    q_results.append({
+                        'temperature': temp,
+                        'n': data['n'],
+                        'passed': data['passed'],
+                        'pass_rate': data['pass_rate'],
+                        'gen_tps': data['gen_tps'],
+                    })
+
+        if q_results:
+            with open(q_dir / f"summary_q{q_idx}.json", 'w') as f:
+                json.dump({
+                    'question_idx': q_idx,
+                    'n': n_total,
+                    'results': q_results,
+                }, f, indent=2)
+
+    print(f"Combined results for {end_q - start_q} questions")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Optimal benchmark - ONE model load per GPU for entire run")
     parser.add_argument('--start', type=int, default=0, help='Start question index')
