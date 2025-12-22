@@ -1,0 +1,12 @@
+# Results and logs
+results_*/
+*.log
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Egg info
+*.egg-info/
+
+# Cache
+.cache/
