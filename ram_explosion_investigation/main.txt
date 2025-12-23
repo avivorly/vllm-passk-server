@@ -1,0 +1,202 @@
+================================================================================
+RAM EXPLOSION INVESTIGATION - LiveCodeBench Benchmark
+================================================================================
+Date: 2025-12-23
+System: 8x RTX 4090, 503GB RAM, RunPod
+
+================================================================================
+PROBLEM SUMMARY
+================================================================================
+
+The benchmark runs 175 coding problems × 16 temperatures × 10,000 completions
+using vLLM for generation and multiprocessing for evaluation.
+
+The system would run fine for hours, then SUDDENLY explode from 45GB RAM to
+480GB+ in 2-3 minutes, crashing the pod. This happened repeatedly at Q21.
+
+Key observation: It wasn't a gradual memory leak. The system was stable, then
+suddenly 3 evaluator processes each grew to 100-220GB.
+
+================================================================================
+ARCHITECTURE
+================================================================================
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  GPU Generators │────▶│  pending_eval/  │────▶│  CPU Evaluators │
+│  (8 processes)  │     │  (queue dir)    │     │  (16 processes) │
+│  1250 per GPU   │     │                 │     │  6 workers each │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                        │
+                                                        ▼
+                                                ┌─────────────────┐
+                                                │ pending_combine │
+                                                │  (queue dir)    │
+                                                └─────────────────┘
+                                                        │
+                                                        ▼
+                                                ┌─────────────────┐
+                                                │ Combiner Thread │
+                                                │ Merges 8 GPUs   │
+                                                └─────────────────┘
+
+Each evaluator:
+1. Claims a file from pending_eval/
+2. Loads 1,250 code completions
+3. For EACH completion, spawns a subprocess to run tests
+4. Uses ProcessPoolExecutor with 6 workers
+
+================================================================================
+ROOT CAUSE IDENTIFIED
+================================================================================
+
+PROBLEM: Question 21 "Stone XOR" has test cases with N=12 elements.
+
+Many generated code completions use:
+    for perm in permutations(A):  # where A has 12 elements
+
+This creates 12! = 479,001,600 permutations.
+Each permutation tuple uses ~152 bytes.
+Total memory: 479M × 152 = 68+ GB PER PROCESS
+
+With multiple evaluator workers processing Q21 simultaneously:
+- Evaluator 0: 220 GB
+- Evaluator 9: 120 GB
+- Evaluator 12: 100 GB
+- Total: 440+ GB → CRASH
+
+================================================================================
+THE BUG: MISSING MEMORY LIMIT
+================================================================================
+
+File: LiveCodeBench/lcb_runner/evaluation/testing_util.py
+
+Line 435-437 BEFORE fix:
+```python
+    # Disable functionalities that can make destructive changes to the test.
+    # max memory is set to 4GB          <-- THIS COMMENT IS A LIE!
+    reliability_guard()                  <-- NO MEMORY LIMIT PASSED!
+```
+
+The reliability_guard() function HAS a memory limit parameter:
+
+```python
+def reliability_guard(maximum_memory_bytes=None):
+    if maximum_memory_bytes is not None:
+        import resource
+        resource.setrlimit(resource.RLIMIT_AS, (maximum_memory_bytes, maximum_memory_bytes))
+```
+
+But it was NEVER called with a value! So resource.setrlimit() was never invoked.
+
+================================================================================
+THE FIX
+================================================================================
+
+Changed testing_util.py line 437:
+```python
+reliability_guard(maximum_memory_bytes=1 * 1024**3)  # 1GB limit
+```
+
+Also fixed utils_execute.py line 101 for consistency.
+
+Now when code tries to allocate >1GB, the OS kills it with MemoryError.
+The process fails gracefully instead of consuming 68GB.
+
+================================================================================
+EVIDENCE FROM LOGS
+================================================================================
+
+BEFORE FIX - Crash at 10:40 (from system_monitor.log):
+─────────────────────────────────────────────────────────────────────────────
+22:35:07 | RAM: 85.7GB  | 73 processes
+22:35:57 | RAM: 160.2GB | processes growing
+22:37:07 | RAM: 415.8GB | EXPLODING
+(crash)
+
+TOP MEMORY PROCESSES during explosion:
+    PID 606024: 222,431 MB (43.1%) - cpu_evaluator.py 0
+    PID 964823: 122,063 MB (23.6%) - cpu_evaluator.py 9
+    PID 1153069: 103,321 MB (20.0%) - cpu_evaluator.py 12
+
+AFTER FIX - Running stable:
+─────────────────────────────────────────────────────────────────────────────
+11:09:34 | RAM: 16.7GB (3.3%)
+11:14:37 | RAM: 45.0GB (8.9%)  ← Processing Q21!
+11:18:39 | RAM: 44.9GB (8.9%)  ← Still stable!
+
+From eval0_detailed.log - RAM delta per evaluation:
+BEFORE: Q21 T=0.9 → system RAM jumped +54GB in ONE evaluation
+AFTER:  Q21 T=1.7 → system RAM delta only +0.2GB
+
+================================================================================
+Q21 PROBLEM ANALYSIS
+================================================================================
+
+Question: "Stone XOR" (abc390_d)
+Number of tests: 43
+Max N in tests: 12
+
+Test case example:
+  Input: "12\n1 2 3 4 5 6 7 8 9 10 11 12"
+
+Generated code patterns that cause memory bombs (501 out of 1250 completions):
+
+1. permutations(A) where len(A)=12 → 479M tuples = 68GB
+2. list(combinations(A, k)) for multiple k
+3. Nested comprehensions: {a^b for a in X for b in Y for c in Z}
+4. Recursive enumeration without memoization
+
+Example problematic completion:
+```python
+from itertools import permutations
+for perm in permutations(A):  # A has 12 elements
+    # tries to iterate 479,001,600 times
+    # each iteration stores data
+```
+
+================================================================================
+WHY TIMEOUT DIDN'T HELP
+================================================================================
+
+The 6-second timeout uses signal.SIGALRM, but:
+
+1. Memory allocation happens FASTER than signal can fire
+2. If Python is in C extension (itertools), signal may not be processed
+3. By the time timeout fires, memory is already allocated
+4. Even after process.kill(), memory may not be freed immediately
+
+resource.setrlimit(RLIMIT_AS) is the ONLY reliable way to prevent this.
+It makes the OS refuse allocations, raising MemoryError immediately.
+
+================================================================================
+FILES IN THIS FOLDER
+================================================================================
+
+main.txt                    - This file
+testing_util_ORIGINAL.py    - Original code (buggy)
+testing_util_FIXED.py       - Fixed code
+utils_execute_FIXED.py      - Fixed code
+crash_log_excerpt.txt       - System monitor log during crash
+stable_log_excerpt.txt      - System monitor log after fix
+eval0_detailed_excerpt.txt  - Per-evaluation memory tracking
+q21_analysis.txt            - Analysis of Q21 problem and generated code
+memory_bomb_examples.txt    - Examples of code that caused explosions
+
+================================================================================
+VERIFICATION
+================================================================================
+
+Test that confirms the fix works:
+
+```python
+import resource
+# Set 1GB limit
+resource.setrlimit(resource.RLIMIT_AS, (1024**3, 1024**3))
+# Try to allocate huge list
+try:
+    big_list = [0] * (200 * 1024 * 1024)  # 1.6GB
+except MemoryError:
+    print("MemoryError caught!")  # This is what we want
+```
+
+Output: "MemoryError caught!" - process fails safely instead of OOMing system.

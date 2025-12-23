@@ -1,0 +1,30 @@
+  TOP MEMORY PROCESSES:
+    PID 606024: 222431MB RSS, 43.1% mem - python3 /workspace/orkspace/cpu_evaluator.py 0 /workspace/orkspace/results_n10k 
+    PID 964823: 122063MB RSS, 23.6% mem - python3 /workspace/orkspace/cpu_evaluator.py 9 /workspace/orkspace/results_n10k 
+    PID 1153069: 103321MB RSS, 20.0% mem - python3 /workspace/orkspace/cpu_evaluator.py 12 /workspace/orkspace/results_n10k
+    PID 3046120: 2493MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046110: 2488MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046108: 2487MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046129: 2485MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046132: 2479MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046119: 2475MB RSS, 0.4% mem - VLLM::EngineCore
+    PID 3046109: 2473MB RSS, 0.4% mem - VLLM::EngineCore
+2025-12-23T10:40:12.693522 | RAM: 484.3/503.7GB (96.2%) | CPU: 57.38/46.93/47.81 | GPU util: 41.8% | VRAM: 98.2% | pending_eval: 14 | pending_combine: 28 | gpu_procs: 8 | eval_procs: 143
+
+================================================================================
+Monitor started at 2025-12-23T11:09:34.845294
+================================================================================
+
+2025-12-23T11:09:34.848440 | RAM: 16.7/503.7GB (3.3%) | CPU: 11.44/27.61/83.77 | GPU util: 0.0% | VRAM: 0.0% | pending_eval: 0 | pending_combine: 42 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:10:35.876122 | RAM: 30.5/503.7GB (6.1%) | CPU: 6.88/23.38/78.8 | GPU util: 0.0% | VRAM: 0.0% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:11:36.519501 | RAM: 42.9/503.7GB (8.5%) | CPU: 31.91/30.16/77.83 | GPU util: 91.1% | VRAM: 98.2% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:12:36.591265 | RAM: 43.9/503.7GB (8.7%) | CPU: 29.69/29.5/74.59 | GPU util: 89.1% | VRAM: 98.2% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:13:37.146870 | RAM: 44.6/503.7GB (8.9%) | CPU: 26.27/28.84/71.55 | GPU util: 85.4% | VRAM: 98.2% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:14:37.783319 | RAM: 45.0/503.7GB (8.9%) | CPU: 30.86/29.85/69.24 | GPU util: 83.2% | VRAM: 98.2% | pending_eval: 8 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 64
+2025-12-23T11:15:38.662547 | RAM: 44.6/503.7GB (8.9%) | CPU: 33.77/30.64/67.03 | GPU util: 82.0% | VRAM: 98.2% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:16:39.036411 | RAM: 44.6/503.7GB (8.9%) | CPU: 29.86/30.17/64.59 | GPU util: 71.0% | VRAM: 98.2% | pending_eval: 1 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 20
+2025-12-23T11:17:39.652629 | RAM: 45.4/503.7GB (9.0%) | CPU: 35.46/31.63/62.76 | GPU util: 82.4% | VRAM: 98.2% | pending_eval: 8 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 69
+2025-12-23T11:18:39.986575 | RAM: 44.9/503.7GB (8.9%) | CPU: 35.81/32.41/61.07 | GPU util: 82.8% | VRAM: 98.2% | pending_eval: 0 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 16
+2025-12-23T11:19:40.172628 | RAM: 45.0/503.7GB (8.9%) | CPU: 42.15/34.71/60.06 | GPU util: 77.6% | VRAM: 98.2% | pending_eval: 8 | pending_combine: 2 | gpu_procs: 8 | eval_procs: 78
+2025-12-23T11:20:41.478570 | RAM: 44.9/503.7GB (8.9%) | CPU: 49.59/37.76/59.49 | GPU util: 65.1% | VRAM: 98.2% | pending_eval: 9 | pending_combine: 4 | gpu_procs: 8 | eval_procs: 72
+2025-12-23T11:21:42.329188 | RAM: 44.6/503.7GB (8.9%) | CPU: 56.36/42.0/59.6 | GPU util: 81.8% | VRAM: 98.2% | pending_eval: 5 | pending_combine: 3 | gpu_procs: 8 | eval_procs: 46

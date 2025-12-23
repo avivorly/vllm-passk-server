@@ -1,0 +1,146 @@
+================================================================================
+MEMORY BOMB EXAMPLES FROM Q21 COMPLETIONS
+================================================================================
+
+These are actual code patterns found in 501 out of 1250 completions at T=0.9.
+When test cases have N=12, these patterns allocate 68+ GB memory.
+
+================================================================================
+EXAMPLE 1: Direct permutation iteration
+================================================================================
+
+```python
+from itertools import permutations
+
+n = int(input())
+a = list(map(int, input().split()))
+
+# When N=12, this creates 479,001,600 iterations
+# Each permutation is a tuple of 12 ints
+# Memory explodes as results accumulate
+results = set()
+for perm in permutations(a):
+    xor_val = 0
+    for x in perm:
+        xor_val ^= x
+    results.add(xor_val)
+
+print(len(results))
+```
+
+Memory usage: 12! tuples × 152 bytes = 72.8 GB
+
+================================================================================
+EXAMPLE 2: Storing all permutations in list
+================================================================================
+
+```python
+from itertools import permutations
+
+def solve():
+    n = int(input())
+    a = list(map(int, input().split()))
+
+    # INSTANT 72 GB allocation
+    all_perms = list(permutations(a))
+
+    unique_xors = set()
+    for perm in all_perms:
+        unique_xors.add(reduce(lambda x, y: x ^ y, perm))
+
+    return len(unique_xors)
+```
+
+Memory usage: Allocates entire list at once = 72.8 GB
+
+================================================================================
+EXAMPLE 3: Recursive with exponential branching
+================================================================================
+
+```python
+def get_possible_xor_values(A_list):
+    N = len(A_list)
+    result = set()
+
+    # Tries all permutations recursively without memoization
+    def recurse(remaining, current_xor):
+        if not remaining:
+            result.add(current_xor)
+            return
+        for i, val in enumerate(remaining):
+            new_remaining = remaining[:i] + remaining[i+1:]
+            recurse(new_remaining, current_xor ^ val)
+
+    recurse(A_list, 0)
+    return result
+```
+
+Memory usage: Stack frames + partial lists = 50+ GB
+
+================================================================================
+EXAMPLE 4: Triple nested comprehension
+================================================================================
+
+```python
+# Creates N^3 intermediate values, then more operations
+possible = {a ^ b ^ c for a in A for b in A for c in A}
+
+# With N=12: 12^3 = 1,728 (okay)
+# But some code does:
+possible = {a ^ b for a in perms for b in perms}
+# 479M × 479M comparisons = impossible
+```
+
+================================================================================
+EXAMPLE 5: Combinations with large k
+================================================================================
+
+```python
+from itertools import combinations
+
+# Tries all possible subset XORs
+for k in range(1, n+1):
+    for combo in combinations(range(n), k):
+        # C(12, 6) = 924 (fine)
+        # But code often stores all results in growing structures
+        pass
+```
+
+================================================================================
+WHY 6-SECOND TIMEOUT DOESN'T HELP
+================================================================================
+
+The timeout uses signal.SIGALRM:
+
+```python
+signal.setitimer(signal.ITIMER_REAL, timeout)
+signal.signal(signal.SIGALRM, handler)
+```
+
+Problems:
+1. list(permutations(12)) allocates 72GB INSTANTLY - no time to fire
+2. If in C extension (itertools), signal may be delayed
+3. Memory allocated before handler can raise TimeoutException
+4. Process killed AFTER memory consumed
+
+Only resource.setrlimit(RLIMIT_AS) prevents allocation.
+
+================================================================================
+THE FIX
+================================================================================
+
+```python
+import resource
+
+def reliability_guard(maximum_memory_bytes=1*1024**3):  # 1 GB
+    resource.setrlimit(
+        resource.RLIMIT_AS,
+        (maximum_memory_bytes, maximum_memory_bytes)
+    )
+```
+
+Now when code tries to allocate >1GB:
+- OS refuses the allocation
+- Python raises MemoryError
+- Process fails gracefully with error code -4
+- System RAM stays stable

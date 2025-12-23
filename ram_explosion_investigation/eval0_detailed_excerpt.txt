@@ -1,0 +1,50 @@
+2025-12-23T10:28:02.658591 | AFTER_CLEANUP | Q20 T=0.6 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.3GB | processed_count=19
+2025-12-23T10:28:23.729701 | BEFORE_EVAL | Q20 T=0.9 | file_kb=1338 | test_bytes=8553 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.5/503.7GB
+2025-12-23T10:28:50.295699 | AFTER_EVAL | Q20 T=0.9 | passed=127/1250 | eval_time=26.5s | tps=47 | mem_self=442MB (Δ+0) | children=0 | sys_ram=45.4GB (Δ-0.1)
+2025-12-23T10:28:50.401000 | AFTER_CLEANUP | Q20 T=0.9 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.3GB | processed_count=20
+2025-12-23T10:28:53.935670 | BEFORE_EVAL | Q20 T=1.1 | file_kb=1387 | test_bytes=8553 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.2/503.7GB
+2025-12-23T10:29:20.051600 | AFTER_EVAL | Q20 T=1.1 | passed=101/1250 | eval_time=26.1s | tps=48 | mem_self=442MB (Δ+0) | children=0 | sys_ram=45.4GB (Δ+0.2)
+2025-12-23T10:29:20.149927 | AFTER_CLEANUP | Q20 T=1.1 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.3GB | processed_count=21
+2025-12-23T10:29:36.217864 | BEFORE_EVAL | Q20 T=1.4 | file_kb=2281 | test_bytes=8553 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.2/503.7GB
+2025-12-23T10:29:59.982824 | AFTER_EVAL | Q20 T=1.4 | passed=11/1250 | eval_time=23.8s | tps=53 | mem_self=442MB (Δ+0) | children=0 | sys_ram=45.1GB (Δ-0.1)
+2025-12-23T10:30:00.123577 | AFTER_CLEANUP | Q20 T=1.4 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.3GB | processed_count=22
+2025-12-23T10:30:17.202636 | BEFORE_EVAL | Q20 T=1.7 | file_kb=3390 | test_bytes=8553 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.1/503.7GB
+2025-12-23T10:30:39.224947 | AFTER_EVAL | Q20 T=1.7 | passed=0/1250 | eval_time=22.0s | tps=57 | mem_self=442MB (Δ+0) | children=0 | sys_ram=45.0GB (Δ-0.1)
+2025-12-23T10:30:39.344659 | AFTER_CLEANUP | Q20 T=1.7 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.0GB | processed_count=23
+2025-12-23T10:32:58.198779 | BEFORE_EVAL | Q21 T=0.3 | file_kb=5150 | test_bytes=3192 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=44.8/503.7GB
+2025-12-23T10:33:18.028582 | AFTER_EVAL | Q21 T=0.3 | passed=0/1250 | eval_time=19.8s | tps=63 | mem_self=442MB (Δ+0) | children=0 | sys_ram=44.8GB (Δ+0.0)
+2025-12-23T10:33:18.116151 | AFTER_CLEANUP | Q21 T=0.3 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=44.8GB | processed_count=24
+2025-12-23T10:33:47.739570 | BEFORE_EVAL | Q21 T=0.4 | file_kb=5021 | test_bytes=3192 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=46.0/503.7GB
+2025-12-23T10:34:07.660546 | AFTER_EVAL | Q21 T=0.4 | passed=0/1250 | eval_time=19.9s | tps=63 | mem_self=442MB (Δ+0) | children=0 | sys_ram=44.8GB (Δ-1.2)
+2025-12-23T10:34:07.747839 | AFTER_CLEANUP | Q21 T=0.4 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=44.8GB | processed_count=25
+2025-12-23T10:35:19.933862 | BEFORE_EVAL | Q21 T=0.6 | file_kb=4778 | test_bytes=3192 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.2/503.7GB
+2025-12-23T10:35:39.520773 | AFTER_EVAL | Q21 T=0.6 | passed=0/1250 | eval_time=19.6s | tps=64 | mem_self=442MB (Δ+0) | children=0 | sys_ram=45.2GB (Δ+0.0)
+2025-12-23T10:35:39.616942 | AFTER_CLEANUP | Q21 T=0.6 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=45.2GB | processed_count=26
+2025-12-23T10:35:53.683382 | BEFORE_EVAL | Q21 T=0.7 | file_kb=4753 | test_bytes=3192 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=45.1/503.7GB
+2025-12-23T10:36:14.979570 | AFTER_EVAL | Q21 T=0.7 | passed=0/1250 | eval_time=21.3s | tps=59 | mem_self=442MB (Δ+0) | children=0 | sys_ram=46.0GB (Δ+0.9)
+2025-12-23T10:36:15.069182 | AFTER_CLEANUP | Q21 T=0.7 | mem_self=442MB (Δ+0 from start) | children=0 | sys_ram=46.1GB | processed_count=27
+2025-12-23T10:37:16.221792 | BEFORE_EVAL | Q21 T=0.9 | file_kb=4387 | test_bytes=3192 | num_tests=43 | mem_self=442MB | children=0 | sys_ram=49.9/503.7GB
+2025-12-23T11:08:00.989452 | STARTUP | mem_before_dataset=117MB | mem_after_dataset=412MB | workers=6
+2025-12-23T11:08:01.023861 | BEFORE_EVAL | Q21 T=1.7 | file_kb=3460 | test_bytes=3192 | num_tests=43 | mem_self=459MB | children=0 | sys_ram=22.2/503.7GB
+2025-12-23T11:08:26.010308 | AFTER_EVAL | Q21 T=1.7 | passed=0/1250 | eval_time=25.0s | tps=50 | mem_self=460MB (Δ+1) | children=0 | sys_ram=22.4GB (Δ+0.2)
+2025-12-23T11:08:26.104025 | AFTER_CLEANUP | Q21 T=1.7 | mem_self=460MB (Δ+2 from start) | children=0 | sys_ram=22.5GB | processed_count=1
+2025-12-23T11:09:09.245501 | SHUTDOWN | processed_count=1 | final_mem_self=460MB | final_sys_ram=19.0GB
+2025-12-23T11:09:48.270698 | STARTUP | mem_before_dataset=104MB | mem_after_dataset=401MB | workers=6
+2025-12-23T11:12:05.253942 | BEFORE_EVAL | Q21 T=0.1 | file_kb=5336 | test_bytes=3192 | num_tests=43 | mem_self=447MB | children=0 | sys_ram=43.3/503.7GB
+2025-12-23T11:12:24.114097 | AFTER_EVAL | Q21 T=0.1 | passed=0/1250 | eval_time=18.8s | tps=66 | mem_self=448MB (Δ+1) | children=0 | sys_ram=44.3GB (Δ+1.0)
+2025-12-23T11:12:24.205362 | AFTER_CLEANUP | Q21 T=0.1 | mem_self=448MB (Δ+1 from start) | children=0 | sys_ram=44.2GB | processed_count=1
+2025-12-23T11:12:52.309716 | BEFORE_EVAL | Q21 T=0.2 | file_kb=5279 | test_bytes=3192 | num_tests=43 | mem_self=448MB | children=0 | sys_ram=44.2/503.7GB
+2025-12-23T11:13:11.675081 | AFTER_EVAL | Q21 T=0.2 | passed=0/1250 | eval_time=19.4s | tps=65 | mem_self=448MB (Δ+0) | children=0 | sys_ram=45.0GB (Δ+0.8)
+2025-12-23T11:13:11.784455 | AFTER_CLEANUP | Q21 T=0.2 | mem_self=448MB (Δ+0 from start) | children=0 | sys_ram=45.0GB | processed_count=2
+2025-12-23T11:13:38.894837 | BEFORE_EVAL | Q21 T=0.3 | file_kb=5096 | test_bytes=3192 | num_tests=43 | mem_self=448MB | children=0 | sys_ram=44.8/503.7GB
+2025-12-23T11:13:58.846192 | AFTER_EVAL | Q21 T=0.3 | passed=0/1250 | eval_time=19.9s | tps=63 | mem_self=448MB (Δ+0) | children=0 | sys_ram=45.1GB (Δ+0.3)
+2025-12-23T11:13:58.931392 | AFTER_CLEANUP | Q21 T=0.3 | mem_self=448MB (Δ+0 from start) | children=0 | sys_ram=45.1GB | processed_count=3
+2025-12-23T11:17:26.928900 | BEFORE_EVAL | Q21 T=0.8 | file_kb=4514 | test_bytes=3192 | num_tests=43 | mem_self=448MB | children=0 | sys_ram=44.8/503.7GB
+2025-12-23T11:17:56.490512 | AFTER_EVAL | Q21 T=0.8 | passed=0/1250 | eval_time=29.6s | tps=42 | mem_self=448MB (Δ+0) | children=0 | sys_ram=44.7GB (Δ-0.1)
+2025-12-23T11:17:56.588936 | AFTER_CLEANUP | Q21 T=0.8 | mem_self=448MB (Δ+0 from start) | children=0 | sys_ram=44.7GB | processed_count=4
+2025-12-23T11:20:01.363037 | BEFORE_EVAL | Q21 T=1.2 | file_kb=3677 | test_bytes=3192 | num_tests=43 | mem_self=448MB | children=0 | sys_ram=44.6/503.7GB
+2025-12-23T11:20:21.716060 | AFTER_EVAL | Q21 T=1.2 | passed=0/1250 | eval_time=20.3s | tps=61 | mem_self=448MB (Δ+0) | children=0 | sys_ram=44.7GB (Δ+0.1)
+2025-12-23T11:20:21.796306 | AFTER_CLEANUP | Q21 T=1.2 | mem_self=448MB (Δ+0 from start) | children=0 | sys_ram=44.7GB | processed_count=5
+2025-12-23T11:20:23.838625 | BEFORE_EVAL | Q21 T=1.4 | file_kb=3079 | test_bytes=3192 | num_tests=43 | mem_self=448MB | children=0 | sys_ram=44.5/503.7GB
+2025-12-23T11:20:43.659968 | AFTER_EVAL | Q21 T=1.4 | passed=0/1250 | eval_time=19.8s | tps=63 | mem_self=448MB (Δ+0) | children=0 | sys_ram=44.9GB (Δ+0.4)
+2025-12-23T11:20:43.762831 | AFTER_CLEANUP | Q21 T=1.4 | mem_self=448MB (Δ+0 from start) | children=0 | sys_ram=44.9GB | processed_count=6

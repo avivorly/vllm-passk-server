@@ -1,0 +1,126 @@
+================================================================================
+Q21 "STONE XOR" ANALYSIS
+================================================================================
+
+Question ID: abc390_d
+Question Title: Stone XOR
+Number of test cases: 43
+Maximum N in test cases: 12
+
+================================================================================
+TEST CASE STRUCTURE
+================================================================================
+
+Sample test input:
+    3
+    2 5 7
+
+Sample expected output:
+    3
+
+The problem involves N bags with stones, and XOR operations.
+Test cases have N values: 3, 10, 11, 12 (varies per test)
+
+Tests with N >= 10:
+  Test 3:  N=12
+  Test 5:  N=12
+  Test 7:  N=10
+  Test 10: N=10
+  Test 11: N=12
+  Test 12: N=10
+  Test 13: N=10
+  Test 15: N=12
+  Test 20: N=12
+  Test 24: N=11
+  Test 35: N=12
+  Test 41: N=10
+
+================================================================================
+WHY N=12 IS CATASTROPHIC
+================================================================================
+
+Many LLM-generated solutions try brute-force approaches:
+
+1. permutations(A) where len(A) = 12
+   12! = 479,001,600 permutations
+   Each permutation tuple: ~152 bytes (12 pointers + overhead)
+   Total: 479M × 152 = 72.8 GB
+
+2. All subsets: 2^12 = 4096 (this is fine)
+   But combined with permutations: 4096 × 479M = catastrophic
+
+3. Cartesian products: 12^3 = 1728 (fine alone)
+   But 12^6 = 2.9M, 12^12 = 8.9 trillion
+
+================================================================================
+STATISTICS FROM T=0.9 COMPLETIONS (1250 samples)
+================================================================================
+
+Analyzed q21_t0.9_gpu5.json (the file being processed when crash occurred):
+
+Completions with permutations(): 127 (10.2%)
+Completions with combinations(): 501 (40.1%)
+Completions with 3+ nested loops: 433 (34.6%)
+Completions with potential memory bombs: 501 (40.1%)
+
+At higher temperatures (0.9+), the model generates more creative but
+often inefficient/incorrect code including brute-force approaches.
+
+================================================================================
+EXAMPLE PROBLEMATIC COMPLETIONS
+================================================================================
+
+Example 1 - Direct permutation bomb:
+```python
+from itertools import permutations
+for perm in permutations(A):  # 479M iterations
+    result = reduce(xor, perm)
+    answers.add(result)
+```
+
+Example 2 - Storing all permutations:
+```python
+all_perms = list(permutations(range(12)))  # 72GB allocation
+```
+
+Example 3 - Nested cartesian:
+```python
+for a in A:
+    for b in A:
+        for c in A:
+            for d in A:  # 12^4 = 20,736 iterations... but grows fast
+```
+
+================================================================================
+WHY THIS DIDN'T CRASH AT LOWER TEMPERATURES
+================================================================================
+
+At T=0.1 to T=0.5:
+- Model generates more deterministic, "textbook" solutions
+- Uses dynamic programming, bit manipulation
+- Avoids brute-force permutation approaches
+- Memory usage per completion: ~1-10 MB
+
+At T=0.9 to T=2.0:
+- Model gets "creative"
+- Tries brute-force solutions that work for small N
+- Doesn't consider N=12 edge case
+- Memory usage per completion: up to 68 GB each!
+
+================================================================================
+THE TIMING OF CRASHES
+================================================================================
+
+Crash always happened when:
+1. GPUs generated Q21 completions for T >= 0.9
+2. Multiple evaluators picked up Q21 T=0.9+ files simultaneously
+3. Each evaluator spawned 6 workers
+4. Workers hit N=12 test case
+5. Code tried permutations(12)
+6. 3+ processes each allocated 68GB+ = OOM
+
+Timeline from logs:
+- 22:35:07: 73 processes, 85.7 GB RAM (seems fine)
+- 22:36:07: RAM growing, processes multiplying
+- 22:37:07: 415.8 GB RAM (explosion in progress)
+- 22:37:30: Pod killed by OOM
